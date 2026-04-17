@@ -116,8 +116,8 @@ body {
 /* Publication Content Styling */
 .publication-title {
     font-family: 'Inter', sans-serif !important;
-    font-size: clamp(2.5rem, 4.6vw, 4rem) !important;
-    font-weight: 700 !important;
+    font-size: clamp(2.35rem, 4.2vw, 3.7rem) !important;
+    font-weight: 650 !important;
     color: var(--text-primary) !important;
     margin-bottom: 2rem !important;
     line-height: 1.08 !important;
@@ -626,7 +626,7 @@ code {
   }
   
   .publication-title {
-    font-size: 2.15rem !important;
+    font-size: 2rem !important;
     line-height: 1.12 !important;
     margin-bottom: 1.5rem !important;
   }
@@ -675,7 +675,7 @@ code {
 
 @media screen and (max-width: 480px) {
   .publication-title {
-    font-size: 1.8rem !important;
+    font-size: 1.68rem !important;
   }
   
   .hero-body {
