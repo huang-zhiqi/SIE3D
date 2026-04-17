@@ -129,18 +129,18 @@ body {
 }
 
 .publication-conference {
-    display: block;
-    margin: -0.6rem 0 1.5rem;
-    padding: 0;
-    background: none;
-    color: #2f80ed;
+    display: inline-block;
+    margin: -0.75rem 0 1.75rem;
+    padding: 0.65rem 1.4rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
+    color: #ffffff;
     font-family: 'Inter', sans-serif;
-    font-size: clamp(2rem, 4vw, 3.25rem);
+    font-size: 1.1rem;
     font-weight: 800;
-    line-height: 1.05;
-    letter-spacing: -0.03em;
-    text-transform: none;
-    box-shadow: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.22);
 }
 
 .publication-banner {
