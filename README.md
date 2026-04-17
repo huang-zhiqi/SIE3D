@@ -1,5 +1,7 @@
 # SIE3D [ICASSP 2026]
 
+[Homepage](https://huang-zhiqi.github.io/SIE3D/) | [arXiv](https://arxiv.org/abs/2509.24004)
+
 The environment setup and usage for SIE3D are as follows.
 
 ## Installation
