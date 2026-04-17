@@ -114,14 +114,18 @@ body {
 
 
 /* Publication Content Styling */
+.publication-hero-container {
+    max-width: 1180px !important;
+}
+
 .publication-title {
     font-family: 'Inter', sans-serif !important;
-    font-size: clamp(2.35rem, 4.2vw, 3.7rem) !important;
-    font-weight: 650 !important;
+    font-size: clamp(2.1rem, 3.45vw, 3.15rem) !important;
+    font-weight: 600 !important;
     color: var(--text-primary) !important;
     margin-bottom: 2rem !important;
     line-height: 1.08 !important;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.03em;
 }
 
 .publication-conference {
@@ -626,7 +630,7 @@ code {
   }
   
   .publication-title {
-    font-size: 2rem !important;
+    font-size: 1.9rem !important;
     line-height: 1.12 !important;
     margin-bottom: 1.5rem !important;
   }
@@ -675,7 +679,7 @@ code {
 
 @media screen and (max-width: 480px) {
   .publication-title {
-    font-size: 1.68rem !important;
+    font-size: 1.56rem !important;
   }
   
   .hero-body {
