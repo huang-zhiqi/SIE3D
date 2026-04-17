@@ -1,4 +1,4 @@
-# SIE3D
+# SIE3D [ICASSP 2026]
 
 The environment setup and usage for SIE3D are as follows.
 
