@@ -29,19 +29,13 @@ import shutil
 import torch.nn as nn
 import torch
 import numpy as np
-import cv2
-try:
-    from deepface import DeepFace
-    DEEPFACE_AVAILABLE = True
-except ImportError:
-    DEEPFACE_AVAILABLE = False
-    print("Warning: DeepFace not available. Neutrality loss will return zero.")
 from insightface.app import FaceAnalysis
 from PIL import Image
 import torch.nn.functional as F
 import logging
 from utils.general_utils import inverse_sigmoid
 import glob
+from utils.deepface_emotion import DEEPFACE_EMOTION_LABELS, load_deepface_emotion_model
 
 try:
     from torch.utils.tensorboard import SummaryWriter
@@ -50,75 +44,57 @@ except ImportError:
     TENSORBOARD_FOUND = False
 
 
+EMOTION_LABEL_ALIASES = {
+    "anger": "angry",
+    "surprised": "surprise",
+}
+EMOTION_MODEL = None
+EMOTION_LABEL_TO_ID = {
+    label: idx for idx, label in enumerate(DEEPFACE_EMOTION_LABELS)
+}
+
+
+def _get_emotion_label_id(target_emotion, label_to_id):
+    emotion_key = target_emotion.strip().lower()
+    emotion_key = EMOTION_LABEL_ALIASES.get(emotion_key, emotion_key)
+
+    if emotion_key in label_to_id:
+        return label_to_id[emotion_key]
+
+    print(f"Warning: Emotion '{target_emotion}' is unsupported. Falling back to 'neutral'.")
+    return label_to_id["neutral"]
+
+
+def _load_emotion_model(device):
+    global EMOTION_MODEL
+
+    if EMOTION_MODEL is None:
+        EMOTION_MODEL = load_deepface_emotion_model()
+
+    if next(EMOTION_MODEL.parameters()).device != device:
+        EMOTION_MODEL = EMOTION_MODEL.to(device)
+
+    return EMOTION_MODEL
+
+
 
 def compute_emotion_loss(images, target_emotion='neutral'):
     """
-    Compute the neutrality regularization loss.
+    Compute a differentiable expression classification loss.
     
     Args:
         images: Rendered image tensor (B, C, H, W)
         target_emotion: Target emotion class, defaults to 'neutral'
     
     Returns:
-        neutrality_loss: Neutrality regularization loss
+        emotion_loss: Cross-entropy loss against the target emotion
     """
-    # Check whether DeepFace is available
-    if not DEEPFACE_AVAILABLE:
-        print("Warning: DeepFace not available, returning zero neutrality loss")
-        return torch.tensor(0.0).to(images.device)
-    
-    try:
-        # Emotion categories supported by DeepFace
-        emotion_labels = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral']
-        target_idx = emotion_labels.index(target_emotion)
-        
-        # Create the target distribution: neutral gets probability 1, all others 0
-        target_dist = torch.zeros(len(emotion_labels)).to(images.device)
-        target_dist[target_idx] = 1.0
-        
-        batch_losses = []
-        
-        for i in range(images.shape[0]):
-            # Convert the tensor to an image array
-            img_tensor = images[i].detach().cpu()
-            img_tensor = torch.clamp(img_tensor, 0, 1)  # Keep values within the [0, 1] range
-            img_np = (img_tensor.permute(1, 2, 0).numpy() * 255).astype(np.uint8)
-            
-            # Convert to BGR format for OpenCV
-            img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
-            
-            try:
-                # Run emotion analysis with DeepFace
-                result = DeepFace.analyze(img_bgr, actions=['emotion'], enforce_detection=False)
-                
-                if isinstance(result, list):
-                    result = result[0]
-                    
-                # Collect the predicted emotion probability distribution
-                emotion_probs = []
-                for emotion in emotion_labels:
-                    emotion_probs.append(result['emotion'][emotion] / 100.0)  # DeepFace returns percentages
-                
-                pred_dist = torch.tensor(emotion_probs).to(images.device)
-                
-                # Compute the cross-entropy loss
-                pred_dist = torch.clamp(pred_dist, 1e-7, 1.0)  # Avoid log(0)
-                ce_loss = -torch.sum(target_dist * torch.log(pred_dist))
-                batch_losses.append(ce_loss)
-                
-            except Exception as e:
-                # If one image fails to analyze, fall back to a moderate loss value
-                print(f"Warning: DeepFace analysis failed for image {i}: {e}")
-                batch_losses.append(torch.tensor(2.0).to(images.device))
-        
-        if batch_losses:
-            return torch.stack(batch_losses).mean()
-        else:
-            return torch.tensor(0.0).to(images.device)
-            
-    except Exception as e:
-        print(f"Error in neutrality loss computation: {e}")
-        return torch.tensor(0.0).to(images.device)
+    model = _load_emotion_model(images.device)
+    logits = model(images)
+    target_idx = _get_emotion_label_id(target_emotion, EMOTION_LABEL_TO_ID)
+    targets = torch.full((logits.shape[0],), target_idx, device=logits.device, dtype=torch.long)
+
+    return F.cross_entropy(logits, targets)
 
 
 
